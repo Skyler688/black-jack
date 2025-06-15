@@ -1,5 +1,5 @@
-function log({ message, color = "white", style = "", newLine = true }) {
-  textMods = "BACKEND -> ";
+function log({ message, color = "white", style = "" }) {
+  textMods = "\nBACKEND -> ";
 
   switch (style) {
     case "bright":
@@ -53,11 +53,11 @@ function log({ message, color = "white", style = "", newLine = true }) {
       break;
   }
 
-  if (newLine) {
-    console.log(`${textMods}${message}\x1b[0m`);
-  } else {
-    process.stdout.write(`${textMods}${message}\x1b[0m`);
-  }
+  console.log(`${textMods}${message}\x1b[0m`);
 }
 
-module.exports = log;
+function err(message) {
+  log({ message: message, color: "red" });
+}
+
+module.exports = { log, err };
