@@ -39,8 +39,10 @@ app.use((req, res, next) => {
 
 // Routes
 const gamePlay = require("./routes/gameRoutes");
+const userAuth = require("./routes/userAuth");
 
 app.use("/game", gamePlay);
+app.use("/user", userAuth);
 
 async function start() {
   await mongoose.connect(process.env.MONGO_URI).then(() => {
