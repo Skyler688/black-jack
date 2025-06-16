@@ -2,6 +2,7 @@ const UserInfo = require("../models/user");
 const { log, err } = require("../helpers/consoleTools");
 const bcrypt = require("bcryptjs");
 const authMiddleware = require("../middleware/authMiddleware");
+const changePassMiddleware = require("../middleware/changePassMiddleware");
 
 const createUser = async (req, res) => {
   try {
@@ -60,6 +61,107 @@ const login = async (req, res) => {
   }
 };
 
+const changePassValidation = [
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { username, oldPassword } = req.body;
+
+      const userCheck = await UserInfo.findOne({ username: username });
+      if (!userCheck) {
+        log({ message: "WARNING invalid username", color: "yellow" });
+        return res.status(404).json({ message: "Invalid username" });
+      }
+
+      const passCheck = await bcrypt.compare(oldPassword, userCheck.password);
+      if (!passCheck) {
+        log({ message: "WARNING invalid password", color: "yellow" });
+        return res.status(404).json({ message: "Invalid password" });
+      }
+
+      req.session.userPassVal = true;
+
+      log({
+        message: "Correct password entered, validation session created",
+        color: "green",
+      });
+      res
+        .status(200)
+        .json({ message: "Correct password, validation session created" });
+    } catch (error) {
+      err(error.message);
+      res.status(500).json({ message: error.message });
+    }
+  },
+];
+
+const changePass = [
+  changePassMiddleware,
+  async (req, res) => {
+    try {
+      const { username, newPassword } = req.body;
+
+      const user = await UserInfo.findOne({ username: username });
+      if (!user) {
+        log({ message: "WARNING invalid username", color: "yellow" });
+        return res.status(404).json({ message: "Invalid username" });
+      }
+
+      const hashedPass = await bcrypt.hash(newPassword, 10);
+      const updatedUserObj = {
+        username: user.username,
+        password: hashedPass,
+        money: user.money,
+      };
+
+      const updateUser = await UserInfo.findOneAndReplace(
+        { _id: user._id },
+        updatedUserObj,
+        { new: true, runValidators: true }
+      );
+      if (!updateUser) {
+        log({
+          message: "WARNING failed to find and update user",
+          color: "yellow",
+        });
+        return res
+          .status(404)
+          .json({ message: "Failed to find and update user" });
+      }
+
+      delete req.session.userPassVal; // delete the users password change validation after change if successfull.
+
+      log({ message: "User password updated successfully", color: "magenta" });
+      res.status(200).json({ message: "User password updated successfully" });
+    } catch (error) {
+      err(error.message);
+      res.status(500).json({ message: error.message });
+    }
+  },
+];
+
+const logout = [
+  authMiddleware,
+  (req, res) => {
+    try {
+      req.session.destroy((error) => {
+        if (error) {
+          err({ message: "Failed to destroy session cookie", color: "red" });
+          return res
+            .status(500)
+            .json({ message: "Error ending session cookie" });
+        }
+      });
+
+      res.clearCookie("connect.sid");
+      res.status(200).json({ message: "User loged out successfully" });
+    } catch (error) {
+      err(error.message);
+      res.status(500).json({ message: error.message });
+    }
+  },
+];
+
 const deleteUser = [
   authMiddleware,
   async (req, res) => {
@@ -73,15 +175,19 @@ const deleteUser = [
       }
 
       req.session.destroy((error) => {
+        // distroy all session data for user
         if (error) {
-          err({ message: "Failed to destroy session cookie" });
+          err({ message: "Failed to destroy session cookie", color: "red" });
           return res
             .status(500)
             .json({ message: "Error ending session cookie" });
         }
       });
 
-      log({ message: "User deleted sucsessfully", color: "magenta" });
+      log({
+        message: "User deleted sucsessfully and session destroyed",
+        color: "magenta",
+      });
       res.clearCookie("connect.sid");
       res.status(200).json({ message: "User deleted successfully" });
     } catch (error) {
@@ -91,4 +197,11 @@ const deleteUser = [
   },
 ];
 
-module.exports = { createUser, login, deleteUser };
+module.exports = {
+  createUser,
+  login,
+  changePassValidation,
+  changePass,
+  logout,
+  deleteUser,
+};
