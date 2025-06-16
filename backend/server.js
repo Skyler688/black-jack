@@ -1,13 +1,31 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
-
 const PORT = 4000;
+
+const mongoose = require("mongoose");
+const session = require("express-session");
 
 // Import functions
 const { log } = require("./helpers/consoleTools");
 
 // middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(
+  session({
+    secret: "ElmTree",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: null,
+    },
+  })
+);
 
 app.use((req, res, next) => {
   log({
@@ -24,10 +42,17 @@ const gamePlay = require("./routes/gameRoutes");
 
 app.use("/game", gamePlay);
 
-app.listen(PORT, () => {
-  log({
-    message: `Ready at http://localhost:${PORT}`,
-    style: "bright",
-    color: "cyan",
+async function start() {
+  await mongoose.connect(process.env.MONGO_URI).then(() => {
+    log({ message: "MongoDB connected", style: "bright", color: "cyan" });
   });
-});
+  app.listen(PORT, () => {
+    log({
+      message: `Ready at http://localhost:${PORT}`,
+      style: "bright",
+      color: "cyan",
+    });
+  });
+}
+
+start();

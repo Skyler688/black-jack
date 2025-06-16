@@ -1,4 +1,5 @@
 const { err, log } = require("../helpers/consoleTools");
+const authMiddleware = require("../middleware/authMiddleware");
 
 // This class is used to create unique instances of the deck of cards for each player curently playing the game.
 class userDeck {
@@ -70,68 +71,76 @@ function getDeckForUser(userId) {
 // REQUEST FUNCTIONS                       REQUEST FUNCTIONS                          REQUEST FUNCTIONS
 
 // deal a card
-const deal = (req, res) => {
-  try {
-    const { userId } = req.body;
+const deal = [
+  authMiddleware,
+  (req, res) => {
+    try {
+      const { userId } = req.body;
 
-    const deck = getDeckForUser(userId); // will create a deck if it dose not exist.
-    deck.shuffle();
+      const deck = getDeckForUser(userId); // will create a deck if it dose not exist.
+      deck.shuffle();
 
-    const card = deck.draw();
+      const card = deck.draw();
+      log({ message: `Card drawn for user: ${userId}`, color: "blue" });
 
-    res.status(200).json({ card });
-  } catch (error) {
-    err(error.message);
-    res.status(500).send(error.message);
-  }
-};
+      res.status(200).json({ card });
+    } catch (error) {
+      err(error.message);
+      res.status(500).send(error.message);
+    }
+  },
+];
 
 // Reset deck
-const reset = (req, res) => {
-  try {
-    const { userId } = req.body;
+const reset = [
+  authMiddleware,
+  (req, res) => {
+    try {
+      const { userId } = req.body;
 
-    if (decks.has(userId)) {
-      const deck = decks.get(userId);
-      deck.reset();
-      log({ message: `Deck reset for user: ${userId}`, color: "blue" });
-      return res
-        .status(200)
-        .json({ message: "Deck has bean reset", deck: deck });
+      if (decks.has(userId)) {
+        const deck = decks.get(userId);
+        deck.reset();
+        log({ message: `Deck reset for user: ${userId}`, color: "blue" });
+        return res.status(200).json({ message: "Deck has bean reset" });
+      }
+
+      log({
+        message: `WARNING no deck found for user: ${userId}`,
+        color: "yellow",
+      });
+      res.status(404).json("Deck not found");
+    } catch (error) {
+      err(error.message);
+      res.status(500).send(error.message);
     }
-
-    log({
-      message: `WARNING no deck found for user: ${userId}`,
-      color: "yellow",
-    });
-    res.status(404).json("Deck not found");
-  } catch (error) {
-    err(error.message);
-    res.status(500).send(error.message);
-  }
-};
+  },
+];
 
 // This is a clean up function to prevent the users deck instance from sitting in ram when not activly playing.
-const removeDeck = (req, res) => {
-  try {
-    const { userId } = req.body;
+const removeDeck = [
+  authMiddleware,
+  (req, res) => {
+    try {
+      const { userId } = req.body;
 
-    if (decks.has(userId)) {
-      decks.delete(userId);
-      log({ message: `Deck removed for user: ${userId}`, color: "magenta" });
-      return res.status(200).json({ message: "Deck removed successfully" });
+      if (decks.has(userId)) {
+        decks.delete(userId);
+        log({ message: `Deck removed for user: ${userId}`, color: "magenta" });
+        return res.status(200).json({ message: "Deck removed successfully" });
+      }
+
+      log({
+        message: `WARNING deck not found for user: ${userId}`,
+        color: "yellow",
+      });
+
+      res.status(404).json({ message: "Deck not found" });
+    } catch (error) {
+      err(error.message);
+      res.status(500).send(error.message);
     }
-
-    log({
-      message: `WARNING deck not found for user: ${userId}`,
-      color: "yellow",
-    });
-
-    res.status(404).json({ message: "Deck not found" });
-  } catch (error) {
-    err(error.message);
-    res.status(500).send(error.message);
-  }
-};
+  },
+];
 
 module.exports = { deal, reset, removeDeck };
