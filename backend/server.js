@@ -6,11 +6,13 @@ const PORT = 4000;
 
 const mongoose = require("mongoose");
 const session = require("express-session");
+const cors = require("cors");
 
 // Import functions
 const { log } = require("./helpers/consoleTools");
 
 // middleware
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(

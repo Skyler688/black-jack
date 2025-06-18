@@ -39,22 +39,30 @@ const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
+    console.log(req.body);
+
     const user = await UserInfo.findOne({ username });
     if (!user) {
       log({ message: "Warning invalid username", color: "yellow" });
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res
+        .status(401)
+        .json({ message: "Invalid username or password", access: false });
     }
 
     const passCorrect = await bcrypt.compare(password, user.password);
     if (!passCorrect) {
       log({ message: "WARNING invalid password", color: "yellow" });
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res
+        .status(401)
+        .json({ message: "Invalid username or password", access: false });
     }
 
     req.session.userId = user._id;
 
     log({ message: "User successfully loged in", color: "magenta" });
-    res.status(200).json({ message: "User found and password correct" });
+    res
+      .status(200)
+      .json({ message: "User found and password correct", access: true });
   } catch (error) {
     err(error.message);
     res.status(500).json({ message: error.message });

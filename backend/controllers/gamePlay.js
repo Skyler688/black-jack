@@ -75,7 +75,9 @@ const deal = [
   authMiddleware,
   (req, res) => {
     try {
-      const { userId } = req.body;
+      // const { userId } = req.body;
+
+      const userId = req.session.userId;
 
       const deck = getDeckForUser(userId); // will create a deck if it dose not exist.
       deck.shuffle();
