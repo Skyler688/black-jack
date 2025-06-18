@@ -69,6 +69,21 @@ const login = async (req, res) => {
   }
 };
 
+const cookieCheck = (req, res) => {
+  try {
+    if (req.session && req.session.userId) {
+      log({ message: "Cookie valid", color: "magenta" });
+      return res.status(200).json({ message: "Cookie valid" });
+    }
+
+    log({ message: "WARNING invalid or missing cookie", color: "yellow" });
+    return res.status(401).json({ message: "Unautorised" });
+  } catch (error) {
+    err(error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const changePassValidation = [
   authMiddleware,
   async (req, res) => {
@@ -208,6 +223,7 @@ const deleteUser = [
 module.exports = {
   createUser,
   login,
+  cookieCheck,
   changePassValidation,
   changePass,
   logout,

@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 
 // Routes
 const gamePlay = require("./routes/gameRoutes");
-const userAuth = require("./routes/userAuth");
+const userAuth = require("./routes/userRoutes");
 
 app.use("/game", gamePlay);
 app.use("/user", userAuth);
