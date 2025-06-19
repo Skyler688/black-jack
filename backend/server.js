@@ -57,6 +57,14 @@ async function start() {
       color: "cyan",
     });
   });
+
+  if (process.env.AUTH_DISABLED === "true") {
+    log({
+      message: "USER AUTH MIDDLEWARE BYPASSED",
+      color: "yellow",
+      style: "bright",
+    });
+  }
 }
 
 start();

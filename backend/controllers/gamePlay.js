@@ -1,5 +1,9 @@
+require("dotenv").config();
+
 const { err, log } = require("../helpers/consoleTools");
 const authMiddleware = require("../middleware/authMiddleware");
+const placeBetMiddleware = require("../middleware/placeBetMiddleware");
+const UserInfo = require("../models/user");
 
 // This class is used to create unique instances of the deck of cards for each player curently playing the game.
 class userDeck {
@@ -145,4 +149,76 @@ const removeDeck = [
   },
 ];
 
-module.exports = { deal, reset, removeDeck };
+const startGame = [
+  authMiddleware,
+  async (req, res) => {
+    try {
+      // For development to bypass the session cookie in login and just pass a username in the req.
+      if (process.env.AUTH_DISABLED === "true") {
+        const { username } = req.body;
+
+        const user = await UserInfo.findOne({ username: username });
+        if (!user) {
+          log({ message: "WARNING invalid username", color: "yellow" });
+          return res
+            .status(401)
+            .json({ message: "Unatherised user not found" });
+        }
+
+        const deck = getDeckForUser(user.username);
+        deck.shuffle();
+
+        log({ message: "Deck created, ready for bet", color: "green" });
+
+        req.session.placeBet = true; // inforces that the game is played in the order expected.
+
+        res.status(200).json({
+          message: "Game started, waiting for bet to be placed",
+          username: user.username,
+          money: user.money,
+        });
+      } else {
+        // Actual production code that uses the session cookie.
+        const userId = req.session.userId;
+
+        const user = await UserInfo.findOne({ _id: userId });
+        if (!user) {
+          log({ message: "WARNING invalid _id", color: "yellow" });
+          return res
+            .status(401)
+            .json({ message: "Unatherised user not found" });
+        }
+
+        const deck = getDeckForUser(userId);
+        deck.shuffle();
+
+        log({ message: "Deck created, ready for bet", color: "green" });
+
+        req.session.placeBet = true; // inforces that the game is played in the order expected.
+
+        res.status(200).json({
+          message: "Game started, waiting for bet to be placed",
+          username: user.username,
+          money: user.money,
+        });
+      }
+    } catch (error) {
+      err(error.message);
+      res.status(500).send(error.message);
+    }
+  },
+];
+
+const placeBet = [
+  placeBetMiddleware,
+  (req, res) => {
+    try {
+      const { bet } = req.body;
+    } catch (error) {
+      err(error.message);
+      res.status(500).send(error.message);
+    }
+  },
+];
+
+module.exports = { deal, reset, removeDeck, startGame, placeBet };

@@ -39,8 +39,6 @@ const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    console.log(req.body);
-
     const user = await UserInfo.findOne({ username });
     if (!user) {
       log({ message: "Warning invalid username", color: "yellow" });
