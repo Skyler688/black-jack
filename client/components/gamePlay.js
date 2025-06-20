@@ -7,8 +7,10 @@ import axios from "axios";
 export default function ControlePanal() {
   const [username, setUsername] = useState("");
   const [money, setMoney] = useState(0);
-  const [gameStage, setGameStage] = useState("bet");
+  const [gameStage, setGameStage] = useState("bet"); // states (bet, continue, win, tie, bust)
   const [bet, setBet] = useState(0);
+  const [playerHand, setPlayerHand] = useState([]);
+  const [dealerHand, setDealerHand] = useState([]);
 
   async function startGame() {
     try {
@@ -19,6 +21,9 @@ export default function ControlePanal() {
       );
 
       console.log(userInfo.data);
+
+      setUsername(userInfo.data.username);
+      setMoney(userInfo.data.money);
     } catch (error) {
       console.log("Error starting game");
     }
@@ -26,22 +31,45 @@ export default function ControlePanal() {
 
   async function placeBet() {
     try {
-      await axios.post(
+      const userInfo = await axios.post(
         "http://localhost:4000/game/bet",
         { username: "Testing123", bet: bet }, // NOTE remove username latter and replace backend with session.userId
         { withCredentials: true }
       );
+
+      setMoney(userInfo.data.money);
+      setPlayerHand(userInfo.data.playerHand);
+      setDealerHand(userInfo.data.dealerHand);
+      setGameStage(userInfo.data.game);
+      console.log(userInfo.data?.gameState); // prints gameState in development mode.
     } catch (error) {
       console.log("Error placing bet");
     }
   }
 
+  async function hit() {
+    try {
+      const userInfo = await axios.post(
+        "http://localhost:4000/game/hit",
+        { username: "Testing123" }, // remove later
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.log("Error hitting");
+    }
+  }
+
   useEffect(() => {
-    startGame(); // run on loding of page
+    startGame(); // run on loading of page
   }, []);
 
   return (
-    <div>
+    <div className="bg-emerald-600 h-[100vh]">
+      <header>
+        <h2>{username}</h2>
+        <h2>Total ${money}</h2>
+      </header>
+
       {gameStage === "bet" && (
         <div className="flex flex-col items-center">
           <h2 className="text-[30px]">Total Bet ${bet}</h2>
@@ -99,6 +127,42 @@ export default function ControlePanal() {
               onClick={placeBet}
             >
               Place Bet
+            </button>
+          </div>
+        </div>
+      )}
+
+      {gameStage === "continue" && (
+        <div className="flex flex-col justify-center items-center h-[100vh]">
+          <div className="">
+            Dealer Hand:
+            {dealerHand.map((card, index) => {
+              return (
+                <p key={index}>
+                  card:{index + 1} = "{card.display} of {card.suit}"
+                </p>
+              );
+            })}
+          </div>
+          <div>
+            PlayerHand:
+            {playerHand.map((card, index) => {
+              return (
+                <p key={index}>
+                  card:{index + 1} = "{card.display} of {card.suit}"
+                </p>
+              );
+            })}
+          </div>
+          <div>
+            <button className="bg-black text-white px-4 py-4 text-[20px] mx-5">
+              Stand
+            </button>
+            <button
+              onClick={hit}
+              className="bg-black text-white px-4 py-4 text-[20px] mx-5"
+            >
+              Hit
             </button>
           </div>
         </div>

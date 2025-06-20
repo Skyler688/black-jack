@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import axios from "axios";
 
 // Components
-import Card from "@/components/card";
-import ControlePanal from "@/components/controlePanal";
+import GamePlay from "@/components/gamePlay";
 
 // IMPORTANT NOTE -> The session cookie on the express server is used to restrict all
 // important routes, in this case it is used in the login step to allow access to the main
@@ -48,11 +47,5 @@ export default async function Home() {
     }
   }
 
-  return (
-    <div className="flex flex-col items-center justify-center h-[100vh] bg-emerald-700">
-      <h1>Game hear</h1>
-      <Card />
-      <ControlePanal />
-    </div>
-  );
+  return <GamePlay />;
 }

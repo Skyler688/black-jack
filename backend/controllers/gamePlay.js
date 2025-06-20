@@ -3,37 +3,80 @@ require("dotenv").config();
 const { err, log } = require("../helpers/consoleTools");
 const authMiddleware = require("../middleware/authMiddleware");
 const placeBetMiddleware = require("../middleware/placeBetMiddleware");
+const hitStandMiddleware = require("../middleware/hitStandMiddleware");
 const UserInfo = require("../models/user");
 
-// This class is used to create unique instances of the deck of cards for each player curently playing the game.
-class userDeck {
+// This class is used to create and track the game state for each user playing the game.
+class GameState {
   constructor() {
+    this.bet = 0;
+    this.dealerHand = [];
+    this.playerHand = [];
     this.deck = this.createDeck();
   }
 
   createDeck() {
     const suits = ["hearts", "diamonds", "spades", "clubs"];
     const values = [
-      "A",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "J",
-      "Q",
-      "K",
+      {
+        display: "A",
+        num: 11,
+      },
+      {
+        display: "2",
+        num: 2,
+      },
+      {
+        display: "3",
+        num: 3,
+      },
+      {
+        display: "4",
+        num: 4,
+      },
+      {
+        display: "5",
+        num: 5,
+      },
+      {
+        display: "6",
+        num: 6,
+      },
+      {
+        display: "7",
+        num: 7,
+      },
+      {
+        display: "8",
+        num: 8,
+      },
+      {
+        display: "9",
+        num: 9,
+      },
+      {
+        display: "10",
+        num: 10,
+      },
+      {
+        display: "J",
+        num: 10,
+      },
+      {
+        display: "Q",
+        num: 10,
+      },
+      {
+        display: "K",
+        num: 10,
+      },
     ];
 
     const cards = [];
 
     for (const suit of suits) {
       for (const value of values) {
-        cards.push({ suit, value });
+        cards.push({ suit, display: value.display, num: value.num });
       }
     }
 
@@ -48,106 +91,38 @@ class userDeck {
     }
   }
 
-  draw() {
-    return this.deck.pop(); // remove the last element in the array.
+  resetDeck() {
+    this.deck = this.createDeck();
   }
 
-  reset() {
-    this.deck = this.createDeck();
+  draw(who) {
+    const card = this.deck.pop(); // remove the last element in the array.
+    if (who === "dealer") this.dealerHand.push(card);
+    if (who === "player") this.playerHand.push(card);
+  }
+
+  resetHands() {
+    this.dealerHand = [];
+    this.playerHand = [];
   }
 }
 
 // This is used to easly add and remove users decks using the .set, .get, and .delete functions.
-const decks = new Map();
+const gameState = new Map();
 
 function getDeckForUser(userId) {
-  if (!decks.has(userId)) {
-    decks.set(userId, new userDeck()); // if deck instance dose not exist create one passing the userId
+  if (!gameState.has(userId)) {
+    gameState.set(userId, new GameState()); // if deck instance dose not exist create one passing the userId
     log({
-      message: `No deck exists for user: ${userId}, new deck created`,
+      message: `No game exists for user: ${userId}, new game created`,
       color: "green",
     });
   }
 
-  return decks.get(userId);
+  return gameState.get(userId);
 }
 
 // REQUEST FUNCTIONS                       REQUEST FUNCTIONS                          REQUEST FUNCTIONS
-
-// deal a card
-const deal = [
-  authMiddleware,
-  (req, res) => {
-    try {
-      // const { userId } = req.body;
-
-      const userId = req.session.userId;
-
-      const deck = getDeckForUser(userId); // will create a deck if it dose not exist.
-      deck.shuffle();
-
-      const card = deck.draw();
-      log({ message: `Card drawn for user: ${userId}`, color: "blue" });
-
-      res.status(200).json({ card });
-    } catch (error) {
-      err(error.message);
-      res.status(500).send(error.message);
-    }
-  },
-];
-
-// Reset deck
-const reset = [
-  authMiddleware,
-  (req, res) => {
-    try {
-      const { userId } = req.body;
-
-      if (decks.has(userId)) {
-        const deck = decks.get(userId);
-        deck.reset();
-        log({ message: `Deck reset for user: ${userId}`, color: "blue" });
-        return res.status(200).json({ message: "Deck has bean reset" });
-      }
-
-      log({
-        message: `WARNING no deck found for user: ${userId}`,
-        color: "yellow",
-      });
-      res.status(404).json("Deck not found");
-    } catch (error) {
-      err(error.message);
-      res.status(500).send(error.message);
-    }
-  },
-];
-
-// This is a clean up function to prevent the users deck instance from sitting in ram when not activly playing.
-const removeDeck = [
-  authMiddleware,
-  (req, res) => {
-    try {
-      const { userId } = req.body;
-
-      if (decks.has(userId)) {
-        decks.delete(userId);
-        log({ message: `Deck removed for user: ${userId}`, color: "magenta" });
-        return res.status(200).json({ message: "Deck removed successfully" });
-      }
-
-      log({
-        message: `WARNING deck not found for user: ${userId}`,
-        color: "yellow",
-      });
-
-      res.status(404).json({ message: "Deck not found" });
-    } catch (error) {
-      err(error.message);
-      res.status(500).send(error.message);
-    }
-  },
-];
 
 const startGame = [
   authMiddleware,
@@ -165,10 +140,14 @@ const startGame = [
             .json({ message: "Unatherised user not found" });
         }
 
-        const deck = getDeckForUser(user.username);
-        deck.shuffle();
+        // Create new gameState instance
+        const game = getDeckForUser(user.username);
+        game.shuffle();
 
-        log({ message: "Deck created, ready for bet", color: "green" });
+        log({
+          message: "Game instance found, ready for bet",
+          color: "magenta",
+        });
 
         req.session.placeBet = true; // inforces that the game is played in the order expected.
 
@@ -189,10 +168,13 @@ const startGame = [
             .json({ message: "Unatherised user not found" });
         }
 
-        const deck = getDeckForUser(userId);
-        deck.shuffle();
+        const game = getDeckForUser(userId);
+        game.shuffle();
 
-        log({ message: "Deck created, ready for bet", color: "green" });
+        log({
+          message: "Game instance found, ready for bet",
+          color: "magenta",
+        });
 
         req.session.placeBet = true; // inforces that the game is played in the order expected.
 
@@ -211,9 +193,144 @@ const startGame = [
 
 const placeBet = [
   placeBetMiddleware,
-  (req, res) => {
+  async (req, res) => {
     try {
-      const { bet } = req.body;
+      if (process.env.AUTH_DISABLED === "true") {
+        const { username, bet } = req.body;
+
+        const user = await UserInfo.findOne({ username: username });
+        if (!user) {
+          log({ message: "WARNING invalid username", color: "yellow" });
+          return res
+            .status(401)
+            .json({ message: "Unauthorized user not found" });
+        }
+
+        if (bet > user.money) {
+          log({
+            message:
+              "WARNING users bet exceeds amount of money, request rejected",
+            color: "yellow",
+          });
+          return res.status(403).json({ message: "Bet exceeds limit" });
+        }
+
+        const balance = user.money - bet;
+
+        const updatedUser = await UserInfo.findOneAndUpdate(
+          { username: username },
+          { $set: { money: balance } }
+        );
+        if (!updatedUser) {
+          log({
+            message: "WARNING failed to update users balance",
+            color: "yellow",
+          });
+
+          res.status(404).json({
+            message: "Failed to update users balance, user not found",
+          });
+        }
+
+        const gameState = getDeckForUser(user.username);
+
+        gameState.bet = bet; // update bet in the game state
+
+        // if deck is down to 30% reset and reshuffle
+        if (gameState.deck.length < 16) {
+          log({
+            message: "Cards less than 30% left, reseting",
+            color: "magenta",
+          });
+          gameState.resetDeck();
+          gameState.shuffle();
+        }
+
+        gameState.draw("dealer");
+        gameState.draw("player");
+        gameState.draw("player");
+
+        const playerScore =
+          gameState.playerHand[0].num + gameState.playerHand[1].num;
+
+        // IMPORTANT NOTE -> If player gets blackjack on draw dont generate or delete session cookie, game
+        // will go back to place bet step.
+        if (playerScore === 21) {
+          game.State.draw("dealer");
+
+          let dealerScore =
+            gameState.dealerHand[0].num + gameState.dealerHand[1].num;
+
+          if (dealerScore === 21) {
+            const returnBet = await UserInfo.findOneAndUpdate(
+              { username: username },
+              { $set: { money: user.money } } // set back to original value before bet was proccessed
+            );
+            if (!returnBet) {
+              log({
+                message:
+                  "WARNING failed to return users bet from tie with dealer",
+                color: "yellow",
+              });
+
+              return res.status(404).json({
+                message:
+                  "Failed to return users bet becuase of tie, user not found",
+              });
+            }
+
+            return res.status(200).json({
+              money: user.money,
+              gameState: gameState,
+              dealerHand: gameState.dealerHand,
+              playerHand: gameState.playerHand,
+              game: "tie",
+            });
+          }
+
+          // Updated users balance if win
+          const winBalance = updatedUser.money + bet * 2;
+
+          const giveWinnings = await UserInfo.findOneAndUpdate(
+            { username: username },
+            { $set: { money: winBalance } }
+          );
+          if (!giveWinnings) {
+            log({
+              message: "WARNING failed to update user winnings",
+              color: "yellow",
+            });
+
+            return res.status(404).json({
+              message: "Failed to update users winnings, user not found",
+            });
+          }
+
+          return res.status(200).json({
+            money: winBalance,
+            gameState: gameState,
+            dealerHand: gameState.dealerHand,
+            playerHand: gameState.playerHand,
+            game: "win",
+          });
+        }
+
+        delete req.session.placeBet; // delete the session to prevent out of order requests
+
+        req.session.hitStand = true; // create new session for next step in the game
+
+        log({ message: "Bet placed, ready for hit/stand", color: "magenta" });
+
+        res.status(200).json({
+          money: balance,
+          gameState: gameState, // remove in production
+          playerHand: gameState.playerHand,
+          dealerHand: gameState.dealerHand,
+          game: "continue",
+        });
+      } else {
+        // ADD PRODUCTON CODE USING SESSION USERID AFTER DEVELOPMENT AND TESTING
+      }
     } catch (error) {
       err(error.message);
       res.status(500).send(error.message);
@@ -221,4 +338,22 @@ const placeBet = [
   },
 ];
 
-module.exports = { deal, reset, removeDeck, startGame, placeBet };
+const hit = [
+  hitStandMiddleware,
+  async (req, res) => {
+    try {
+      if (process.env.AUTH_DISABLED === "true") {
+        const { username } = req.body;
+      } else {
+        // ADD PRODUCTON CODE USING SESSION USERID AFTER DEVELOPMENT AND TESTING
+      }
+
+      res.status(200).json({ message: "Hit proccesed" });
+    } catch (error) {
+      err(error.message);
+      res.status(500).send(error.message);
+    }
+  },
+];
+
+module.exports = { startGame, placeBet, hit };

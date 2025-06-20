@@ -13,10 +13,6 @@ function log({ message, color = "white", style = "" }) {
     case "under":
       textMods += "\x1b[4m";
       break;
-
-    case "blink":
-      textMods += "\x1b[5m";
-      break;
   }
 
   switch (color) {
