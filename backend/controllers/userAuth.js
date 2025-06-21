@@ -1,5 +1,5 @@
 const UserInfo = require("../models/user");
-const { log, err } = require("../helpers/consoleTools");
+const { log, err } = require("../tools/consoleTools");
 const bcrypt = require("bcryptjs");
 const authMiddleware = require("../middleware/authMiddleware");
 const changePassMiddleware = require("../middleware/changePassMiddleware");
@@ -25,7 +25,7 @@ const createUser = async (req, res) => {
       }
     }
 
-    req.session.userId = newUser._id;
+    req.session.user = newUser.username;
 
     log({ message: "User successfully created", color: "green" });
     res.status(200).json({ message: "User created successfully" });
@@ -55,7 +55,7 @@ const login = async (req, res) => {
         .json({ message: "Invalid username or password", access: false });
     }
 
-    req.session.userId = user._id;
+    req.session.user = user.username;
 
     log({ message: "User successfully loged in", color: "magenta" });
     res
@@ -69,7 +69,7 @@ const login = async (req, res) => {
 
 const cookieCheck = (req, res) => {
   try {
-    if (req.session && req.session.userId) {
+    if (req.session && req.session.user) {
       log({ message: "Cookie valid", color: "magenta" });
       return res.status(200).json({ message: "Cookie valid" });
     }
@@ -174,6 +174,8 @@ const logout = [
         }
       });
 
+      delete req.session.user;
+
       res.clearCookie("connect.sid");
       res.status(200).json({ message: "User loged out successfully" });
     } catch (error) {
@@ -209,6 +211,9 @@ const deleteUser = [
         message: "User deleted sucsessfully and session destroyed",
         color: "magenta",
       });
+
+      delete req.session.user;
+
       res.clearCookie("connect.sid");
       res.status(200).json({ message: "User deleted successfully" });
     } catch (error) {

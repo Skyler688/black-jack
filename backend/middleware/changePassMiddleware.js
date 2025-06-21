@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const { log } = require("../helpers/consoleTools");
+const { log } = require("../tools/consoleTools");
 
 const changePassMiddleware = (req, res, next) => {
   if (process.env.AUTH_DISABLED === "true") {

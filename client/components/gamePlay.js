@@ -7,7 +7,7 @@ import axios from "axios";
 export default function ControlePanal() {
   const [username, setUsername] = useState("");
   const [money, setMoney] = useState(0);
-  const [gameStage, setGameStage] = useState("bet"); // states (bet, continue, win, tie, bust)
+  const [gameStage, setGameStage] = useState("bet"); // states (bet, continue, win, tie, bust, lose)
   const [bet, setBet] = useState(0);
   const [playerHand, setPlayerHand] = useState([]);
   const [dealerHand, setDealerHand] = useState([]);
@@ -43,7 +43,28 @@ export default function ControlePanal() {
       setGameStage(userInfo.data.game);
       console.log(userInfo.data?.gameState); // prints gameState in development mode.
     } catch (error) {
-      console.log("Error placing bet");
+      console.log(error.message);
+    }
+  }
+
+  async function stand() {
+    try {
+      const userInfo = await axios.post(
+        "http://localhost:4000/game/stand",
+        { username: "Testing123" },
+        { withCredentials: true }
+      );
+
+      // if the money changes it will send the object, else the object will not be sent.
+      if (userInfo.data?.money !== undefined) {
+        setMoney(userInfo.data.money);
+      }
+      setPlayerHand(userInfo.data.playerHand);
+      setDealerHand(userInfo.data.dealerHand);
+      setGameStage(userInfo.data.game);
+      console.log(userInfo.data);
+    } catch (error) {
+      console.error(error.message);
     }
   }
 
@@ -54,8 +75,17 @@ export default function ControlePanal() {
         { username: "Testing123" }, // remove later
         { withCredentials: true }
       );
+
+      // if the money changes it will send the object, else the object will not be sent.
+      if (userInfo.data?.money !== undefined) {
+        setMoney(userInfo.data.money);
+      }
+      setPlayerHand(userInfo.data.playerHand);
+      setDealerHand(userInfo.data.dealerHand);
+      setGameStage(userInfo.data.game);
+      console.log(userInfo.data?.gameState);
     } catch (error) {
-      console.log("Error hitting");
+      console.log(error.message);
     }
   }
 
@@ -139,7 +169,8 @@ export default function ControlePanal() {
             {dealerHand.map((card, index) => {
               return (
                 <p key={index}>
-                  card:{index + 1} = "{card.display} of {card.suit}"
+                  Card:{index + 1} = "{card.display} of {card.suit}" Value:
+                  {card.num}
                 </p>
               );
             })}
@@ -149,13 +180,17 @@ export default function ControlePanal() {
             {playerHand.map((card, index) => {
               return (
                 <p key={index}>
-                  card:{index + 1} = "{card.display} of {card.suit}"
+                  card:{index + 1} = "{card.display} of {card.suit}" Value:
+                  {card.num}
                 </p>
               );
             })}
           </div>
           <div>
-            <button className="bg-black text-white px-4 py-4 text-[20px] mx-5">
+            <button
+              onClick={stand}
+              className="bg-black text-white px-4 py-4 text-[20px] mx-5"
+            >
               Stand
             </button>
             <button
@@ -165,6 +200,30 @@ export default function ControlePanal() {
               Hit
             </button>
           </div>
+        </div>
+      )}
+
+      {gameStage === "bust" && (
+        <div className="flex justify-center items-center h-[100vh]">
+          <h1 className="text-7xl">Bust!</h1>
+        </div>
+      )}
+
+      {gameStage === "lose" && (
+        <div className="flex justify-center items-center h-[100vh]">
+          <h1 className="text-7xl">Dealer wins!</h1>
+        </div>
+      )}
+
+      {gameStage === "win" && (
+        <div className="flex justify-center items-center h-[100vh]">
+          <h1 className="text-7xl">You win!</h1>
+        </div>
+      )}
+
+      {gameStage === "tie" && (
+        <div className="flex justify-center items-center h-[100vh]">
+          <h1 className="text-7xl">Tie!</h1>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { log } = require("../helpers/consoleTools");
+const { log } = require("../tools/consoleTools");
 
 const userAuthMiddleware = (req, res, next) => {
   if (process.env.AUTH_DISABLED === "true") {
@@ -10,7 +10,7 @@ const userAuthMiddleware = (req, res, next) => {
       style: "bright",
     });
     return next();
-  } else if (req.session && req.session.userId) {
+  } else if (req.session && req.session.user) {
     // session is checked first to prevent the server from crashing in the event of trying to read from a session that dose not exists.
     return next();
   }

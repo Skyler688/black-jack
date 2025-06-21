@@ -9,7 +9,7 @@ const session = require("express-session");
 const cors = require("cors");
 
 // Import functions
-const { log } = require("./helpers/consoleTools");
+const { log } = require("./tools/consoleTools");
 
 // middleware
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));

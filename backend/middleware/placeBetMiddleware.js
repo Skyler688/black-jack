@@ -1,4 +1,4 @@
-const { log } = require("../helpers/consoleTools");
+const { log } = require("../tools/consoleTools");
 
 const placeBetMiddleware = (req, res, next) => {
   if (req.session && req.session.placeBet) {
