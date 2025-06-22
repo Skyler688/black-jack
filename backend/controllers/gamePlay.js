@@ -19,7 +19,7 @@ function getGameInstance(userId) {
       color: "green",
     });
   } else {
-    log({ message: "User game instance found", color: "magenta" });
+    log({ message: "User game instance found", color: "blue" });
   }
 
   return gameState.get(userId);
@@ -53,6 +53,8 @@ async function updateBalance(username, action) {
     throw new Error(
       "Failed to updated users balance, user found but no value was changed"
     );
+
+  gameState.bet = 0;
 
   return balance;
 }
@@ -110,7 +112,7 @@ const checkGameState = [
         }
       }
 
-      if (game === "hitStand") {
+      if (game === "hitStand" || game === "bet") {
         const gameState = getGameInstance(username);
 
         console.log(gameState.playerHand);
@@ -121,6 +123,7 @@ const checkGameState = [
 
         return res.status(200).json({
           money: user.money,
+          username: user.username,
           playerHand: gameState.playerHand,
           dealerHand: gameState.dealerHand,
           gameState: game,
@@ -334,10 +337,6 @@ const hit = [
       let responce = {};
       if (game === "bust" || game === "hitStand") {
         // NOTE -> no nead to update balance
-
-        if (game === "bust") {
-          gameState.resetHands();
-        }
 
         responce = {
           // NOTE -> If no money object is sent the money state on the client will not change.

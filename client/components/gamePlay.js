@@ -20,23 +20,6 @@ export default function ControlePanal({
   const [playerHand, setPlayerHand] = useState(player);
   const [dealerHand, setDealerHand] = useState(dealer);
 
-  // async function startGame() {
-  //   try {
-  //     const userInfo = await axios.post(
-  //       "http://localhost:4000/game/start",
-  //       { username: "Testing123" }, // NOTE remove latter when using session.userId
-  //       { withCredentials: true }
-  //     );
-
-  //     console.log(userInfo.data);
-
-  //     setUsername(userInfo.data.username);
-  //     setBalance(userInfo.data.money);
-  //   } catch (error) {
-  //     console.log("Error starting game");
-  //   }
-  // }
-
   async function placeBet() {
     try {
       const userInfo = await axios.post(
@@ -96,10 +79,6 @@ export default function ControlePanal({
       console.log(error.message);
     }
   }
-
-  // useEffect(() => {
-  //   startGame(); // run on loading of page
-  // }, []);
 
   return (
     <div className="bg-emerald-600 h-[100vh]">
