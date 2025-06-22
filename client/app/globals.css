@@ -1,6 +1,7 @@
 @import "tailwindcss";
+@tailwind utilities;
 
-:root {
+/* :root {
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -10,7 +11,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
+} */
 
 /* @media (prefers-color-scheme: dark) {
   :root {
@@ -19,8 +20,24 @@
   }
 } */
 
-body {
+/* body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+} */
+
+@layer base {
+  body {
+    @apply bg-emerald-600;
+  }
+
+  button {
+    @apply hover:scale-110 transition-all duration-75;
+  }
+}
+
+@layer utilities {
+  .chip {
+    @apply w-20 h-20 rounded-full text-[20px] mx-5 border-dashed border-6 font-bold;
+  }
 }

@@ -3,31 +3,39 @@
 import { useState, useEffect } from "react";
 
 import axios from "axios";
+import { motion } from "framer-motion";
 
-export default function ControlePanal() {
-  const [username, setUsername] = useState("");
-  const [money, setMoney] = useState(0);
-  const [gameStage, setGameStage] = useState("bet"); // states (bet, continue, win, tie, bust, lose)
+import Card from "./card";
+
+export default function ControlePanal({
+  gameState,
+  username,
+  money,
+  dealer,
+  player,
+}) {
+  const [balance, setBalance] = useState(money);
+  const [gameStage, setGameStage] = useState(gameState); // states (bet, continue, win, tie, bust, lose)
   const [bet, setBet] = useState(0);
-  const [playerHand, setPlayerHand] = useState([]);
-  const [dealerHand, setDealerHand] = useState([]);
+  const [playerHand, setPlayerHand] = useState(player);
+  const [dealerHand, setDealerHand] = useState(dealer);
 
-  async function startGame() {
-    try {
-      const userInfo = await axios.post(
-        "http://localhost:4000/game/start",
-        { username: "Testing123" }, // NOTE remove latter when using session.userId
-        { withCredentials: true }
-      );
+  // async function startGame() {
+  //   try {
+  //     const userInfo = await axios.post(
+  //       "http://localhost:4000/game/start",
+  //       { username: "Testing123" }, // NOTE remove latter when using session.userId
+  //       { withCredentials: true }
+  //     );
 
-      console.log(userInfo.data);
+  //     console.log(userInfo.data);
 
-      setUsername(userInfo.data.username);
-      setMoney(userInfo.data.money);
-    } catch (error) {
-      console.log("Error starting game");
-    }
-  }
+  //     setUsername(userInfo.data.username);
+  //     setBalance(userInfo.data.money);
+  //   } catch (error) {
+  //     console.log("Error starting game");
+  //   }
+  // }
 
   async function placeBet() {
     try {
@@ -37,7 +45,7 @@ export default function ControlePanal() {
         { withCredentials: true }
       );
 
-      setMoney(userInfo.data.money);
+      setBalance(userInfo.data.money);
       setPlayerHand(userInfo.data.playerHand);
       setDealerHand(userInfo.data.dealerHand);
       setGameStage(userInfo.data.game);
@@ -57,7 +65,7 @@ export default function ControlePanal() {
 
       // if the money changes it will send the object, else the object will not be sent.
       if (userInfo.data?.money !== undefined) {
-        setMoney(userInfo.data.money);
+        setBalance(userInfo.data.money);
       }
       setPlayerHand(userInfo.data.playerHand);
       setDealerHand(userInfo.data.dealerHand);
@@ -78,7 +86,7 @@ export default function ControlePanal() {
 
       // if the money changes it will send the object, else the object will not be sent.
       if (userInfo.data?.money !== undefined) {
-        setMoney(userInfo.data.money);
+        setBalance(userInfo.data.money);
       }
       setPlayerHand(userInfo.data.playerHand);
       setDealerHand(userInfo.data.dealerHand);
@@ -89,15 +97,15 @@ export default function ControlePanal() {
     }
   }
 
-  useEffect(() => {
-    startGame(); // run on loading of page
-  }, []);
+  // useEffect(() => {
+  //   startGame(); // run on loading of page
+  // }, []);
 
   return (
     <div className="bg-emerald-600 h-[100vh]">
       <header>
         <h2>{username}</h2>
-        <h2>Total ${money}</h2>
+        <h2>Total ${balance}</h2>
       </header>
 
       {gameStage === "bet" && (
@@ -162,7 +170,7 @@ export default function ControlePanal() {
         </div>
       )}
 
-      {gameStage === "continue" && (
+      {gameStage === "hitStand" && (
         <div className="flex flex-col justify-center items-center h-[100vh]">
           <div className="">
             Dealer Hand:

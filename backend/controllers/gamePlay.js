@@ -59,6 +59,82 @@ async function updateBalance(username, action) {
 
 // REQUEST FUNCTIONS                       REQUEST FUNCTIONS                          REQUEST FUNCTIONS
 
+const checkGameState = [
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const session = req.session;
+
+      let username = "";
+      if (process.env.AUTH_DISABLED === "true") {
+        username = req.body.username;
+      } else {
+        username = req.session.user;
+      }
+
+      // console.log(session);
+
+      let game = "";
+
+      if (!session) {
+        log({
+          message:
+            "WARNING user auth is bypassed, and no game state detected, directing to start game",
+          color: "yellow",
+        });
+        game = "start";
+      } else {
+        // session is detected, check what session is present
+        if (session.gameStarted) {
+          // if the game instance is present find the gameState.
+          if (session.placeBet) {
+            log({
+              message: "Users game state found (placeBet)",
+              color: "magenta",
+            });
+            game = "bet";
+          } else if (session.hitStand) {
+            log({
+              message: "Users game state found (hitStand)",
+              color: "magenta",
+            });
+            game = "hitStand";
+          }
+        } else {
+          log({
+            message:
+              "User auth enabled, no game state detected, directing to start game",
+            color: "green",
+          });
+          game = "start";
+        }
+      }
+
+      if (game === "hitStand") {
+        const gameState = getGameInstance(username);
+
+        console.log(gameState.playerHand);
+        const user = await UserInfo.findOne({ username });
+        if (!user) {
+          throw new Error("User not found");
+        }
+
+        return res.status(200).json({
+          money: user.money,
+          playerHand: gameState.playerHand,
+          dealerHand: gameState.dealerHand,
+          gameState: game,
+        });
+      }
+
+      res.status(200).json({ gameState: game });
+    } catch (error) {
+      err(error.message);
+      res.status(500).send(error.message);
+    }
+  },
+];
+
 const startGame = [
   authMiddleware,
   async (req, res) => {
@@ -79,7 +155,6 @@ const startGame = [
 
       // Create new gameState instance
       const game = getGameInstance(user.username);
-      game.resetHands(); // incase the page is refreashed to prevent the user from having the prev games hand.
       game.shuffle();
       game.balance = user.money;
 
@@ -89,6 +164,8 @@ const startGame = [
       });
 
       req.session.placeBet = true; // inforces that the game is played in the order expected.
+      req.session.gameStarted = true; // used by the checkGameState route to render the correct gameState on the frontend to prevent jumping back to start game on page refresh.
+      req.session.save();
 
       res.status(200).json({
         message: "Game started, waiting for bet to be placed",
@@ -174,17 +251,20 @@ const placeBet = [
           game = "win";
         }
       } else {
-        game = "continue";
+        game = "hitStand"; // continue game
       }
 
       if (game === "tie" || game === "win") {
         // NOTE -> No user session updated neaded, as game will return to bet route
+
+        gameState.resetHands();
 
         balance = await updateBalance(username, game);
       } else {
         delete req.session.placeBet; // delete the session to prevent out of order requests
 
         req.session.hitStand = true; // allow access to hit.stand routes
+        req.session.save();
 
         log({ message: "Bet placed, ready for hit/stand", color: "magenta" });
       }
@@ -239,18 +319,25 @@ const hit = [
         game = "bust";
       } else {
         // player score < 21 (continue)
-        game = "continue";
+        game = "hitStand";
       }
 
       if (game === "bust" || game === "win" || game === "tie") {
         delete req.session.hitStand; // remove access to hit/stand routes
 
+        gameState.resetHands();
+
         req.session.placeBet = true; // give access to place bet route
+        req.session.save();
       }
 
       let responce = {};
-      if (game === "bust" || game === "continue") {
+      if (game === "bust" || game === "hitStand") {
         // NOTE -> no nead to update balance
+
+        if (game === "bust") {
+          gameState.resetHands();
+        }
 
         responce = {
           // NOTE -> If no money object is sent the money state on the client will not change.
@@ -262,6 +349,8 @@ const hit = [
       } else {
         // Win or Tie
         const balance = await updateBalance(username, game);
+
+        gameState.resetHands();
 
         responce = {
           money: balance,
@@ -339,6 +428,12 @@ const stand = [
         };
       }
 
+      gameState.resetHands();
+
+      delete req.session.hitStand;
+      req.session.placeBet = true;
+      req.session.save();
+
       res.status(200).json(responce);
     } catch (error) {
       err(error.message);
@@ -347,4 +442,4 @@ const stand = [
   },
 ];
 
-module.exports = { startGame, placeBet, hit, stand };
+module.exports = { checkGameState, startGame, placeBet, hit, stand };

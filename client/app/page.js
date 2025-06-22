@@ -5,10 +5,17 @@ import axios from "axios";
 
 // Components
 import GamePlay from "@/components/gamePlay";
+import { use } from "react";
 
 // IMPORTANT NOTE -> The session cookie on the express server is used to restrict all
 // important routes, in this case it is used in the login step to allow access to the main
 // page of the application.
+
+let gameState = ""; // used to pass game state to the client.
+let username = "";
+let money = "";
+let dealerHand = [];
+let playerHand = [];
 
 export default async function Home() {
   if (process.env.AUTH_DISABLED === "true") {
@@ -41,11 +48,66 @@ export default async function Home() {
       if (checkCookie.status !== 200) {
         redirect("/login");
       }
+
+      // send game state check to render correct game state in the event of refresh.
+      try {
+        const userInfo = await axios.post(
+          "http://localhost:4000/game/check/state",
+          { username: "Testing123" },
+          {
+            headers: {
+              Cookie: `connect.sid=${session.value}`,
+            },
+          }
+        );
+
+        gameState = userInfo.data.gameState;
+        console.log("Users game state: ", gameState);
+
+        // if the game is in the hitStand state grab the hands to pass to client
+        if (gameState === "hitStand") {
+          dealerHand = userInfo.data.dealerHand;
+          playerHand = userInfo.data.playerHand;
+        }
+      } catch (error) {
+        console.log(error.message);
+      }
+
+      if (gameState === "start") {
+        // start game instance on backend server
+        try {
+          const userInfo = await axios.post(
+            "http://localhost:4000/game/start",
+            { username: "Testing123" }, // NOTE remove latter when using session.userId
+            {
+              headers: {
+                Cookie: `connect.sid=${session.value}`,
+              },
+            }
+          );
+
+          console.log(userInfo.data);
+
+          gameState = "bet";
+          username = userInfo.data.username;
+          money = userInfo.data.money;
+        } catch (error) {
+          console.log("Error starting game");
+        }
+      }
     } catch (error) {
       console.log(error.message);
       redirect("/login");
     }
   }
 
-  return <GamePlay />;
+  return (
+    <GamePlay
+      gameState={gameState}
+      username={username}
+      money={money}
+      dealer={dealerHand}
+      player={playerHand}
+    />
+  );
 }
