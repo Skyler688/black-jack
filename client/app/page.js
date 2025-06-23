@@ -5,7 +5,6 @@ import axios from "axios";
 
 // Components
 import GamePlay from "@/components/gamePlay";
-import { use } from "react";
 
 // IMPORTANT NOTE -> The session cookie on the express server is used to restrict all
 // important routes, in this case it is used in the login step to allow access to the main

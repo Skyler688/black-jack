@@ -32,12 +32,26 @@
   }
 
   button {
-    @apply hover:scale-110 transition-all duration-75;
+    @apply hover:scale-110 transition-all duration-75 cursor-pointer;
   }
 }
 
 @layer utilities {
+  button:disabled {
+    @apply scale-100 opacity-50 pointer-events-none;
+  }
+
   .chip {
-    @apply w-20 h-20 rounded-full text-[20px] mx-5 border-dashed border-6 font-bold;
+    @apply w-[14vw] lg:w-[7vw] h-[14vw] lg:h-[7vw] 
+    text-[3.5vw] lg:text-[1.75vw]
+    mx-[3vw] lg:mx-[1.5vw] border-[1vw] lg:border-[0.5vw] border-dashed 
+    rounded-full font-bold;
+  }
+
+  .options {
+    @apply w-[18vw] lg:w-[9vw] h-[8vw] lg:h-[4vw] 
+    mx-[4vw] lg:mx-[2vw] mt-[2vw] lg:mt-[2vw] 
+    text-[3vw] lg:text-[1.5vw] font-bold 
+    rounded-2xl border-black border-[0.5vw] lg:border-[0.25vw] text-white;
   }
 }

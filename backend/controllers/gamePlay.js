@@ -115,7 +115,7 @@ const checkGameState = [
       if (game === "hitStand" || game === "bet") {
         const gameState = getGameInstance(username);
 
-        console.log(gameState.playerHand);
+        // console.log(gameState.playerHand);
         const user = await UserInfo.findOne({ username });
         if (!user) {
           throw new Error("User not found");
@@ -348,8 +348,6 @@ const hit = [
       } else {
         // Win or Tie
         const balance = await updateBalance(username, game);
-
-        gameState.resetHands();
 
         responce = {
           money: balance,

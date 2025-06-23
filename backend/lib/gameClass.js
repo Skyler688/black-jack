@@ -96,7 +96,6 @@ module.exports = class GameState {
   resetHands() {
     this.dealerHand = [];
     this.playerHand = [];
-    this.bet = 0;
   }
 
   getScore(who) {
