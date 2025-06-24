@@ -6,7 +6,7 @@ router.post("/login", user.login);
 router.post("/check", user.cookieCheck);
 router.post("/pass/validation", user.changePassValidation);
 router.post("/pass/change", user.changePass);
-router.get("/logout", user.logout);
+router.post("/logout", user.logout);
 router.delete("/delete", user.deleteUser);
 
 module.exports = router;

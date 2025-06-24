@@ -8,7 +8,7 @@ module.exports = class GameState {
   }
 
   createDeck() {
-    const suits = ["hearts", "diamonds", "spades", "clubs"];
+    const suits = ["♠", "♥", "♦", "♣"];
     const values = [
       {
         display: "A",

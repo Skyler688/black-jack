@@ -8,6 +8,9 @@ export default function PlaceBetModal({
   setDealerHand,
   setPlayerHand,
   setGameStage,
+  setPlayerScore,
+  setDealerScore,
+  setTwentyOne,
 }) {
   // NOTE -> nead to figure out a way to pass the state around
   async function placeBet() {
@@ -21,8 +24,11 @@ export default function PlaceBetModal({
       setBalance(userInfo.data.money);
       setPlayerHand(userInfo.data.playerHand);
       setDealerHand(userInfo.data.dealerHand);
+      setPlayerScore(userInfo.data.playerScore);
+      setDealerScore(userInfo.data.dealerScore);
       setGameStage(userInfo.data.game);
-      console.log(userInfo.data?.gameState); // prints gameState in development mode.
+      setTwentyOne(userInfo.data.twentyOne);
+      console.log(userInfo.data?.gameState); // prints gameState if sent (for development).
     } catch (error) {
       console.log(error.message);
     }

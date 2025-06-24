@@ -4,6 +4,11 @@ const bcrypt = require("bcryptjs");
 const authMiddleware = require("../middleware/authMiddleware");
 const changePassMiddleware = require("../middleware/changePassMiddleware");
 
+// used to delete the users maped gameState. this is done in the logout function to
+// ovoid the users game state from sitting in ram while not activly playing. This prevents
+// possible memory overflow.
+const { gameState } = require("./gamePlay");
+
 const createUser = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -165,7 +170,10 @@ const logout = [
   authMiddleware,
   (req, res) => {
     try {
+      gameState.delete(req.session.user); // remove users game instance from memory, imported from the /controllers/gamePlay.js file.
+
       req.session.destroy((error) => {
+        // destroy all sessions the user may have
         if (error) {
           err({ message: "Failed to destroy session cookie", color: "red" });
           return res
@@ -174,12 +182,10 @@ const logout = [
         }
       });
 
-      delete req.session.user;
-
-      res.clearCookie("connect.sid");
+      res.clearCookie("connect.sid"); // clear the clients cookie
       res.status(200).json({ message: "User loged out successfully" });
     } catch (error) {
-      err(error.message);
+      err(error);
       res.status(500).json({ message: error.message });
     }
   },

@@ -126,6 +126,8 @@ const checkGameState = [
           username: user.username,
           playerHand: gameState.playerHand,
           dealerHand: gameState.dealerHand,
+          playerScore: gameState.getScore("player"),
+          dealerScore: gameState.getScore("dealer"),
           gameState: game,
         });
       }
@@ -257,14 +259,30 @@ const placeBet = [
         game = "hitStand"; // continue game
       }
 
+      let playerHand = [];
+      let dealerHand = [];
+      const playerScore = gameState.getScore("player");
+      const dealerScore = gameState.getScore("dealer");
+
+      let twentyOne = false;
+
       if (game === "tie" || game === "win") {
         // NOTE -> No user session updated neaded, as game will return to bet route
+
+        log({ message: "21", color: "blue", style: "bright" });
+        twentyOne = true;
+
+        playerHand = gameState.playerHand;
+        dealerHand = gameState.dealerHand;
 
         gameState.resetHands();
 
         balance = await updateBalance(username, game);
       } else {
         delete req.session.placeBet; // delete the session to prevent out of order requests
+
+        playerHand = gameState.playerHand;
+        dealerHand = gameState.dealerHand;
 
         req.session.hitStand = true; // allow access to hit.stand routes
         req.session.save();
@@ -274,9 +292,12 @@ const placeBet = [
 
       res.status(200).json({
         money: balance,
-        gameState: gameState, // remove in production
-        playerHand: gameState.playerHand,
-        dealerHand: gameState.dealerHand,
+        // gameState: gameState, // remove in production
+        playerHand: playerHand,
+        dealerHand: dealerHand,
+        playerScore: playerScore,
+        dealerScore: dealerScore,
+        twentyOne: twentyOne,
         game: game,
       });
     } catch (error) {
@@ -301,7 +322,7 @@ const hit = [
 
       gameState.draw("player");
 
-      let playerScore = gameState.getScore("player");
+      const playerScore = gameState.getScore("player");
 
       let game = "";
 
@@ -325,6 +346,36 @@ const hit = [
         game = "hitStand";
       }
 
+      const dealerScore = gameState.getScore("dealer");
+
+      let responce = {};
+      if (game === "bust" || game === "hitStand") {
+        // NOTE -> no nead to update balance
+
+        responce = {
+          // NOTE -> If no money object is sent the money state on the client will not change.
+          // gameState: gameState, // remove in production
+          playerHand: gameState.playerHand,
+          dealerHand: gameState.dealerHand,
+          playerScore: playerScore,
+          dealerScore: dealerScore,
+          game: game,
+        };
+      } else {
+        // Win or Tie
+        const balance = await updateBalance(username, game);
+
+        responce = {
+          money: balance,
+          // gameState: gameState, // remove in production
+          playerHand: gameState.playerHand,
+          dealerHand: gameState.dealerHand,
+          playerScore: playerScore,
+          dealerScore: dealerScore,
+          game: game,
+        };
+      }
+
       if (game === "bust" || game === "win" || game === "tie") {
         delete req.session.hitStand; // remove access to hit/stand routes
 
@@ -334,33 +385,9 @@ const hit = [
         req.session.save();
       }
 
-      let responce = {};
-      if (game === "bust" || game === "hitStand") {
-        // NOTE -> no nead to update balance
-
-        responce = {
-          // NOTE -> If no money object is sent the money state on the client will not change.
-          gameState: gameState, // remove in production
-          playerHand: gameState.playerHand,
-          dealerHand: gameState.dealerHand,
-          game: game,
-        };
-      } else {
-        // Win or Tie
-        const balance = await updateBalance(username, game);
-
-        responce = {
-          money: balance,
-          gameState: gameState, // remove in production
-          playerHand: gameState.playerHand,
-          dealerHand: gameState.dealerHand,
-          game: game,
-        };
-      }
-
       res.status(200).json(responce);
     } catch (error) {
-      err(error.message);
+      err(error);
       res.status(500).send(error.message);
     }
   },
@@ -407,9 +434,10 @@ const stand = [
       if (game === "lose") {
         // if loose send no money object so the UI balance dose not change.
         responce = {
-          gameState: gameState, // remove in production
+          // gameState: gameState, // remove in production
           playerHand: gameState.playerHand,
           dealerHand: gameState.dealerHand,
+          dealerScore: dealerScore,
           game: game,
         };
       } else {
@@ -418,9 +446,10 @@ const stand = [
 
         responce = {
           money: balance,
-          gameState: gameState, // remove in production
+          // gameState: gameState, // remove in production
           playerHand: gameState.playerHand,
           dealerHand: gameState.dealerHand,
+          dealerScore: dealerScore,
           game: game,
         };
       }
@@ -439,4 +468,4 @@ const stand = [
   },
 ];
 
-module.exports = { checkGameState, startGame, placeBet, hit, stand };
+module.exports = { checkGameState, startGame, placeBet, hit, stand, gameState };

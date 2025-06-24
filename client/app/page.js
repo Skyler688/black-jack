@@ -17,6 +17,8 @@ export default async function Home() {
   let money = "";
   let dealerHand = [];
   let playerHand = [];
+  let playerScore = 0;
+  let dealerScore = 0;
 
   const cookieStore = await cookies();
   const session = cookieStore.get("connect.sid"); // grabs the session cookie that is from the express server
@@ -96,6 +98,8 @@ export default async function Home() {
     if (gameState === "hitStand" || gameState === "bet") {
       dealerHand = userInfo.data.dealerHand;
       playerHand = userInfo.data.playerHand;
+      playerScore = userInfo.data.playerScore;
+      dealerScore = userInfo.data.dealerScore;
       username = userInfo.data.username;
       money = userInfo.data.money;
     }
@@ -130,6 +134,8 @@ export default async function Home() {
       money={money}
       dealer={dealerHand}
       player={playerHand}
+      pScore={playerScore}
+      dScore={dealerScore}
     />
   );
 }
