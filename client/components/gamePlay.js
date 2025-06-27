@@ -18,10 +18,12 @@ export default function GamePlay({
   dScore,
 }) {
   const [balance, setBalance] = useState(money);
+  const [displayBalance, setDisplayBalance] = useState(money);
   const [gameStage, setGameStage] = useState(gameState); // states (bet, hitStand, 21, win, tie, bust, lose)
   const [bet, setBet] = useState(0);
   const [playerHand, setPlayerHand] = useState(player);
   const [dealerHand, setDealerHand] = useState(dealer);
+  const [tempDealerHand, setTempDealerHand] = useState(dealer);
   const [playerScore, setPlayerScore] = useState(pScore);
   const [dealerScore, setDealerScore] = useState(dScore);
   const [standing, setStanding] = useState(false);
@@ -56,11 +58,20 @@ export default function GamePlay({
         setBalance(userInfo.data.money);
       }
       setPlayerHand(userInfo.data.playerHand);
-      setDealerHand(userInfo.data.dealerHand);
-      setDealerScore(userInfo.data.dealerScore);
-      setTimeout(() => {
-        setGameStage(userInfo.data.game);
-      }, 3000);
+      setTempDealerHand(userInfo.data.dealerHand);
+      setDealerHand((prev) => {
+        const updated = [...prev];
+        updated[0].num = userInfo.data.dealerHand[0].num;
+        return updated;
+      });
+      const handLen = userInfo.data.dealerHand.length;
+      // setDealerScore(userInfo.data.dealerScore);
+      if (userInfo.data.game !== "hitStand") {
+        setTimeout(() => {
+          setGameStage(userInfo.data.game);
+        }, handLen * 1000);
+        console.log(handLen * 1000);
+      }
       console.log(userInfo.data);
     } catch (error) {
       console.error(error.message);
@@ -80,13 +91,18 @@ export default function GamePlay({
         setBalance(userInfo.data.money);
       }
       setPlayerHand(userInfo.data.playerHand);
-      setDealerHand(userInfo.data.dealerHand);
+      setTempDealerHand(userInfo.data.dealerHand);
+      setDealerHand((prev) => {
+        const updated = [...prev];
+        updated[0].num = userInfo.data.dealerHand[0].num;
+        return updated;
+      }); // to fix bug if first card is ace and value gets converted to 1 on the backend to update the first card to get acurate score calculation.
       setPlayerScore(userInfo.data.playerScore);
-      setDealerScore(userInfo.data.dealerScore);
+      // setDealerScore(userInfo.data.dealerScore);
       if (userInfo.data.game !== "hitStand") {
         setTimeout(() => {
           setGameStage(userInfo.data.game);
-        }, 3000);
+        }, (tempDealerHand.length + 1) * 1000);
       }
       console.log(userInfo.data?.gameState);
     } catch (error) {
@@ -95,22 +111,60 @@ export default function GamePlay({
   }
 
   useEffect(() => {
-    if (gameStage !== "bet" && gameStage !== "hitStand") {
+    if (tempDealerHand.length > dealerHand.length) {
+      for (let i = dealerHand.length; i < tempDealerHand.length; i++) {
+        const delay = (i - dealerHand.length + 1) * 1000;
+        setTimeout(() => {
+          setDealerHand((prev) => {
+            const updated = [...prev, tempDealerHand[i]];
+
+            let score = updated.reduce((sum, card) => sum + card.num, 0);
+            setDealerScore(score);
+
+            return updated; // sets dealer hand after score updated
+          }); // used to prevent stale values when calculating the score
+        }, delay);
+      }
+      setTempDealerHand([]);
+    }
+
+    if (twentyOne) {
+      setTimeout(() => {
+        setTwentyOne(false);
+      }, 3000);
+    }
+
+    if (gameStage !== "bet" && gameStage !== "hitStand" && !twentyOne) {
+      setTimeout(() => {
+        setDisplayBalance(balance);
+      }, 1000);
       setTimeout(() => {
         setGameStage("bet");
         setBet(0);
         setStanding(false);
-        setTwentyOne(false);
       }, 2000);
     }
-  }, [gameStage]);
+  }, [
+    tempDealerHand,
+    dealerHand,
+    gameStage,
+    twentyOne,
+    displayBalance,
+    balance,
+  ]);
 
   return (
     <div className="flex flex-col h-[100vh]">
-      <header>
-        <h2>{username}</h2>
-        <h2>Total ${balance}</h2>
-        <button onClick={logout}>Logout</button>
+      <header className="flex justify-between items-center">
+        <h2 className="text-[4vw] lg:text-[2vw] font-bold mx-[1.5vw] lg:mx-[0.75vw]">
+          {username}
+        </h2>
+        <h2 className="text-[5vw] lg:text-[2.5vw] font-extrabold">
+          Total ${displayBalance}
+        </h2>
+        <button onClick={logout} className="bg-red-700 options">
+          Logout
+        </button>
       </header>
 
       <AnimatePresence>
@@ -131,6 +185,7 @@ export default function GamePlay({
               money={balance}
               setBalance={setBalance}
               setDealerHand={setDealerHand}
+              setTempDealerHand={setTempDealerHand}
               setPlayerHand={setPlayerHand}
               setGameStage={setGameStage}
               setPlayerScore={setPlayerScore}
@@ -163,7 +218,7 @@ export default function GamePlay({
                 Hit
               </button>
             </div>
-            <div className="flex justify-center h-[30vh] relative">
+            <div className="flex justify-center h-[25vh] relative">
               {playerHand.map((card, index) => {
                 const overlapOffset = 30;
                 const centerOffset =
@@ -175,7 +230,7 @@ export default function GamePlay({
                     initial={{ x: "50vw" }}
                     animate={{
                       x: `${x}px`,
-                      y: `${index}vh`,
+                      y: `${index / 2}vh`,
                     }}
                     // exit={{ x: "50vw" }}
                     transition={{ duration: 0.5 }}
@@ -207,21 +262,28 @@ export default function GamePlay({
               })}
             </div>
 
-            <h2 className="text-[3vh] font-bold">Score: {playerScore}</h2>
+            {playerScore <= 21 ? (
+              <h2 className="text-[3vh] font-bold">Score: {playerScore}</h2>
+            ) : (
+              <h2 className="text-red-700 text-[3vh] font-bold">
+                Score: {playerScore}
+              </h2>
+            )}
 
-            <div className="flex justify-center h-[30vh] relative">
+            <div className="flex justify-center h-[25vh] relative">
               {dealerHand.map((card, index) => {
                 const overlapOffset = 30;
                 const centerOffset =
-                  ((playerHand.length - 1) / 2) * overlapOffset;
+                  ((dealerHand.length - 1) / 2) * overlapOffset;
                 const x = overlapOffset * index - centerOffset;
+
                 return (
                   <motion.div
                     key={`${card.display}-${card.suit}-${index}`}
                     initial={{ x: "50vw" }}
                     animate={{
                       x: `${x}px`,
-                      y: `${index}vh`,
+                      y: `${index / 2}vh`,
                     }}
                     // exit={{ x: "50vw" }}
                     transition={{ duration: 0.5 }}
@@ -253,7 +315,13 @@ export default function GamePlay({
               })}
             </div>
 
-            <h2 className="text-[3vh] font-bold">Dealer: {dealerScore}</h2>
+            {dealerScore <= 21 ? (
+              <h2 className="text-[3vh] font-bold">Dealer: {dealerScore}</h2>
+            ) : (
+              <h2 className="text-red-700 text-[3vh] font-bold">
+                Dealer: {dealerScore}
+              </h2>
+            )}
           </div>
         )}
       </AnimatePresence>

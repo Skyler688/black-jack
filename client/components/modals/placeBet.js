@@ -6,6 +6,7 @@ export default function PlaceBetModal({
   money,
   setBalance,
   setDealerHand,
+  setTempDealerHand,
   setPlayerHand,
   setGameStage,
   setPlayerScore,
@@ -23,7 +24,12 @@ export default function PlaceBetModal({
 
       setBalance(userInfo.data.money);
       setPlayerHand(userInfo.data.playerHand);
-      setDealerHand(userInfo.data.dealerHand);
+      if (userInfo.data.twentyOne) {
+        setDealerHand([userInfo.data.dealerHand[0]]); // set first card to avoid delayed draw.
+        setTempDealerHand(userInfo.data.dealerHand);
+      } else {
+        setDealerHand(userInfo.data.dealerHand);
+      }
       setPlayerScore(userInfo.data.playerScore);
       setDealerScore(userInfo.data.dealerScore);
       setGameStage(userInfo.data.game);
