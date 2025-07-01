@@ -59,4 +59,12 @@
     text-[3vw] lg:text-[1.5vw] font-bold 
     rounded-2xl border-black border-[0.5vw] lg:border-[0.25vw] text-white;
   }
+
+  .label {
+    @apply text-[2vh] font-bold;
+  }
+
+  .input {
+    @apply bg-emerald-400 w-[20vh] border-2 rounded-[0.5vh];
+  }
 }

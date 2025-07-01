@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useState } from "react";
 
-export default function Login() {
+export default function CreateAccount() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [warning, setWarning] = useState(false);
@@ -13,10 +13,10 @@ export default function Login() {
 
   // Sends a reqest to the express server and grabs the cookie that allows home page
   // to be accessed, as well as granting access to restricted api routes on the express server.
-  async function login() {
+  async function create() {
     try {
       await axios.post(
-        "http://localhost:4000/user/login",
+        "http://localhost:4000/user/create",
         { username: username, password: password },
         {
           withCredentials: true,
@@ -32,9 +32,9 @@ export default function Login() {
     }
   }
 
-  function createAccount() {
+  function back() {
     try {
-      router.push("/createAccount");
+      router.push("/login");
     } catch (error) {
       console.log(error.message);
     }
@@ -42,8 +42,8 @@ export default function Login() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-10 h-[100vh] bg-emerald-700">
-      <h2 className="text-[4vh] font-bold">Login</h2>
-      {warning && <p className="text-red-600">Invalid username or password.</p>}
+      <h2 className="text-[4vh] font-bold">Create Account</h2>
+      {warning && <p className="text-red-600">Username taken, try again.</p>}
       <label className="label">
         Username
         <input
@@ -67,12 +67,12 @@ export default function Login() {
       </label>
 
       <div className="flex">
-        <button className="bg-amber-700 options" onClick={createAccount}>
-          New
+        <button className="bg-red-700 options" onClick={back}>
+          Back
         </button>
 
-        <button className="bg-blue-700 options" onClick={login}>
-          Login
+        <button className="bg-blue-700 options" onClick={create}>
+          Create
         </button>
       </div>
     </div>

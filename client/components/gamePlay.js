@@ -41,8 +41,12 @@ export default function GamePlay({
 
       router.push("/");
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
     }
+  }
+
+  async function cage() {
+    router.push("/cage");
   }
 
   async function stand() {
@@ -156,15 +160,22 @@ export default function GamePlay({
   return (
     <div className="flex flex-col h-[100vh]">
       <header className="flex justify-between items-center">
-        <h2 className="text-[4vw] lg:text-[2vw] font-bold mx-[1.5vw] lg:mx-[0.75vw]">
-          {username}
-        </h2>
-        <h2 className="text-[5vw] lg:text-[2.5vw] font-extrabold">
-          Total ${displayBalance}
-        </h2>
-        <button onClick={logout} className="bg-red-700 options">
-          Logout
-        </button>
+        <div className="flex items-center">
+          <button className="bg-gray-600 options" onClick={cage}>
+            Cage
+          </button>
+          <h2 className="text-[4vw] lg:text-[2.5vw] mt-[2vw] font-extrabold">
+            Total ${displayBalance}
+          </h2>
+        </div>
+        <div className="flex items-center">
+          <h2 className="text-[3vw] lg:text-[1.5vw] font-bold mt-[1.5vw] lg:mt-[2vw]">
+            {username}
+          </h2>
+          <button onClick={logout} className="bg-red-700 options">
+            Logout
+          </button>
+        </div>
       </header>
 
       <AnimatePresence>
