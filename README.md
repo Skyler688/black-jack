@@ -6,7 +6,7 @@
 
 - Navigate into the backend directory and run the command (npm install), this will install all necessary dependencies.
 
-- Navigate into the client directory and run the command (npx create-next-app@latest .).
+- Navigate into the client directory and run the command (npm install).
 
 - Add a .env file to the backend directory, then add your mongoDB atlas URI with the tag (MONGO_URI = "your URI key"), as well as a tag (AUTH_DISABLED = false). This is used in development to bypass user auth middleware for testing the API. Then in the client directory add a .env file with the tag (AUTH_DISABLED = false) as well.
 
