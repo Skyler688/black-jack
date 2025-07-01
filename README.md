@@ -8,7 +8,7 @@
 
 - Navigate into the client directory and run the command (npx create-next-app@latest .).
 
-- Add a .env file to the backend directory, then add your mongoDB atlas URI with the tag (MONGO_URI = "your URI key"), as well as a tag (AUTH_DISABLED = false). This is used in development to bypass user auth middleware for testing the API. Then add a .env file with the tag (AUTH_DISABLED = false) as well.
+- Add a .env file to the backend directory, then add your mongoDB atlas URI with the tag (MONGO_URI = "your URI key"), as well as a tag (AUTH_DISABLED = false). This is used in development to bypass user auth middleware for testing the API. Then in the client directory add a .env file with the tag (AUTH_DISABLED = false) as well.
 
 - Once each directory is set up you can run (npm run dev) in the backend and client directorys. This will start both servers and the search url will be displayed inside of the client terminal.
 
