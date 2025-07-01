@@ -1,11 +1,21 @@
 # **Project Overview**
 
-## Plan
+## Setup
 
-A basic blackjack game that is secure and cheat proof. This is done through putting all game state and logic on the backend and restricting the game play routes with session cookies. I would like to make card components on the front end and use transform animations to draw and flip cards. I also will be makeing a fake cheakout/ cashout to get chips and or money to play the game.
+- This project uses two servers, one for the backend API, and one for the frontend UI. Both will nead to be started individually.
 
-## Curent layout
+- Navigate into the backend directory and run the command (npm install), this will install all necessary dependencies.
 
-Ive decided to use two servers for the project, an express backend and a nextJS frontend. Ive layed out the building blocks for my api requests on the backend and
-established a connection with a mongoBD atlas database to manage user data. I am using bycrypt to hash passwords, and have locked out any restriceted routes with
-a session cookie and auth middleware. On the nextJS server i am restricting main page access with that cookie. as well as a check function that runs server side to prevent bypasing by the client modifing the code. I have also set up a way to track the game state for each user on the express server, this is done through a class with a constructor that has all the nessisary functions to generate and modify the deck. I then use the Map() function the easaly create, get and delete, the users deck instance. I have not made the actual gamplay routes only some testing ones to insure the basic deck functions work as expected.
+- Navigate into the client directory and run the command (npx create-next-app@latest .).
+
+- Add a .env file to the backend directory, then add your mongoDB atlas URI with the tag (MONGO_URI = "your URI key"), as well as a tag (AUTH_DISABLED = false). This is used in development to bypass user auth middleware for testing the API. Then add a .env file with the tag (AUTH_DISABLED = false) as well.
+
+- Once each directory is set up you can run (npm run dev) in the backend and client directorys. This will start both servers and the search url will be displayed inside of the client terminal.
+
+## How To Play
+
+To play the game you will first nead to create an account, this can be done through the "New" button on the login page. Once the account is created and loged in, you can get chips by clicking the "Cage" button. Note, you do not nead to enter any card info as the checkout is just for show, just select the amount you want in the "Buy In" input and click the Buy Chips button (max amount is 10,000). After that you should be able to place bets and play the game.
+
+## About
+
+This project uses a backend API that tracks the games state for each user loged in. This was done to prevent cheating and create a secure system. The backend game play routes are protected with session middleware to both check if the user is valid as well as renforcing the game order. The front end uses axios to send requests to the backend, as well as the framer motions library to animate the cards and bet modale.

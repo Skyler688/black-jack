@@ -78,6 +78,7 @@ module.exports = class GameState {
   // Fisher-Yates shuffle algorithm.
   shuffle() {
     for (let i = this.deck.length - 1; i > 0; i--) {
+      // loop through the array starting at the senond to last possition.
       const j = Math.floor(Math.random() * (i + 1));
       [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]]; // swap positions to random deck position.
     }
@@ -111,7 +112,7 @@ module.exports = class GameState {
       if (who === "dealer") {
         for (let i = 0; i < this.dealerHand.length; i++) {
           if (this.dealerHand[i].num === 11) {
-            // use the card value to ovoid converting a already converted card
+            // use the card value to avoid converting a already converted card
             this.dealerHand[i].num = 1; // convert the first ace it sees to a 1
             break;
           }
